@@ -5,6 +5,7 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 30
 SECRET = "201d573bd7d1344d3a3bfce1550b69102fd11be3db6d379508b6cccc58ea230b"
@@ -16,6 +17,7 @@ oauth2 = OAuth2PasswordBearer(tokenUrl="login")
 crypt = CryptContext(schemes=["bcrypt"])
 
 class User(BaseModel):
+
     username: str
     name: str 
     cc: str
@@ -117,5 +119,5 @@ async def me(user: User = Depends(user_actual)):
 
 "CONSULTA DE USUARIOS"
 @router.get("/users")
-async def users(user: User = Depends(user_actual)):
+async def users():
     return users_db
