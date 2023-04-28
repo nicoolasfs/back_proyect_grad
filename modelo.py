@@ -1,0 +1,1 @@
+#Este archivo se creará el modelo de la red neuronal convolucional y se guardará en el archivo modelo.h5.
