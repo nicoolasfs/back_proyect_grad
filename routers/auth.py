@@ -30,7 +30,7 @@ class UserDB(User):
 #DB MOMENTANEA
 users_db = {
     'nfonseca': {"username": "nfonseca", "name": "Nicolás", "cc": "1233696364", "role": "Usuario", "disabled": False, "password": "$2a$04$PWWgDGsBjxjCaXbxcNWr4e/.1FQrMm8h/U/ryDY8qOPAZgVXsqM9C"},
-    'jandrade': {"username": "jandrade", "name": "Jaime", "cc": "123456789","role": "Administrador", "disabled" : False, "password": "$2a$04$lO7ytQCwybsHsftsan.3V.1VTyvvSAsz9/SHeEvVsWZ7YWSiGJSg2"}
+    'jandrade': {"username": "jandrade", "name": "Jaime", "cc": "123456789", "role": "Administrador", "disabled" : False, "password": "$2a$04$lO7ytQCwybsHsftsan.3V.1VTyvvSAsz9/SHeEvVsWZ7YWSiGJSg2"}
     }
 
 def buscar_user_db(username: str):
