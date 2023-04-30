@@ -19,18 +19,18 @@ crypt = CryptContext(schemes=["bcrypt"])
 class User(BaseModel):
 
     username: str
-    name: str 
+    fullname: str 
     cc: str
     role: str 
     disabled: bool
-
 class UserDB(User):
+
     password: str
 
 #DB MOMENTANEA
 users_db = {
-    'nfonseca': {"username": "nfonseca", "name": "Nicolás", "cc": "1233696364", "role": "Usuario", "disabled": False, "password": "$2a$04$PWWgDGsBjxjCaXbxcNWr4e/.1FQrMm8h/U/ryDY8qOPAZgVXsqM9C"},
-    'jandrade': {"username": "jandrade", "name": "Jaime", "cc": "123456789", "role": "Administrador", "disabled" : False, "password": "$2a$04$lO7ytQCwybsHsftsan.3V.1VTyvvSAsz9/SHeEvVsWZ7YWSiGJSg2"}
+    'nfonseca': {"username": "nfonseca", "fullname": "Nicolás Fonseca", "cc": "1233696364", "role": "Usuario", "disabled": False, "password": "$2a$04$PWWgDGsBjxjCaXbxcNWr4e/.1FQrMm8h/U/ryDY8qOPAZgVXsqM9C"},
+    'jandrade': {"username": "jandrade", "fullname": "Jaime Andrade", "cc": "123456789", "role": "Administrador", "disabled" : False, "password": "$2a$04$lO7ytQCwybsHsftsan.3V.1VTyvvSAsz9/SHeEvVsWZ7YWSiGJSg2"}
     }
 
 def buscar_user_db(username: str):
@@ -93,7 +93,7 @@ async def update(user: UserDB, user_actual: User = Depends(user_actual)):
 
 "INICIO DE SESIÓN"
 @router.post("/login")
-   
+
 async def login(form: OAuth2PasswordRequestForm = Depends()):
 
     user_db = users_db.get(form.username)
