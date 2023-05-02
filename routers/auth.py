@@ -23,20 +23,15 @@ crypt = CryptContext(schemes=["bcrypt"])
 
 users_db = {}
 
-def buscar_user_db(username: str):
-    user = user_schema(db_client.local.users.find_one({"username": username}))
-    
-    if username in user:
-        return UserDB(**user_schema(user))
-    
 def buscar_user(username: str):
+    
     user = user_schema(db_client.local.users.find_one({"username": username}))
     if username in user:
         
         return User(**user_schema(user))
     
 async def auth_user(token: str = Depends(oauth2)):
-
+    
     exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Credenciales inválidas",
@@ -44,21 +39,27 @@ async def auth_user(token: str = Depends(oauth2)):
 
     try:
         username = jwt.decode(token, SECRET, algorithms=[ALGORITHM]).get("sub")
+        print (username)
         if username is None:
             raise exception
 
     except JWTError:
+        
+        return {"error": "error"}
         raise exception
 
     return buscar_user(username)
 
 
 async def user_actual(user: User = Depends(auth_user)):
-    if user.disabled:
+    
+    userdict = dict(user)
+    
+    if userdict["disabled"] is True:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Usuario inactivo")
-
+    
     return user
 
 #REGISTRO DE USUARIOS
@@ -66,7 +67,7 @@ async def user_actual(user: User = Depends(auth_user)):
 async def new_user(user: UserDB):
     
     userdict = dict(user)
-    userdict["disabled"] = False
+    userdict["disabled"] = True
     del userdict["id"]
     
     if userdict["username"] in db_client.local.users.distinct("username"):
@@ -75,11 +76,15 @@ async def new_user(user: UserDB):
     
     #MongoDB asigna un id automáticamente
     id = db_client.local.users.insert_one(userdict).inserted_id
-
+    
     new_user = user_schema(db_client.local.users.find_one({"_id": id}))
     
     #encriptamos la contraseña
     new_user["password"] = crypt.hash(new_user["password"])
+    
+    #Insertamos la nueva contraseña encriptada en la base de datos
+    #$set sirve para actualizar un campo específico, en este caso la contraseña
+    db_client.local.users.update_one({"_id": id}, {"$set": new_user})
     
     return UserDB(**new_user)
     
@@ -108,24 +113,35 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
     if not user_db:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario no es correcto")
-        
-    user = buscar_user_db(form.username)
     
-    if not crypt.verify(form.password, user.password):
+    #Verificamos la contraseña
+    if not crypt.verify(form.password, user_db["password"]):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="La contraseña no es correcta")
-
-    access_token = {"sub": user.username,
-                    "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)}
-
-    return {"access_token": jwt.encode(access_token, SECRET, algorithm=ALGORITHM), "token_type": "bearer"}
-
-#CONSULTA DEL USUARIO ACTUAL
-@router.get("/users/{id}", response_model=UserDB, status_code=status.HTTP_200_OK)
-async def me(id: str ):#= Depends(user_actual)
+        
+    #Creamos el token
+    token = jwt.encode(
+        {"sub": user_db["username"], "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)},
+        SECRET, algorithm=ALGORITHM)
     
+    #Actualizamos el token en la base de datos
+    db_client.local.users.update_one({"username": user_db["username"]}, {"$set": {"token": token}})
+    
+    #Retornamos el usuario
+    return UserDB(**user_db)
+
+#CONSULTA DEL USUARIO POR ID
+@router.get("/users/{id}", response_model=UserDB, status_code=status.HTTP_200_OK)
+async def user_by_id(id: str = Depends(user_actual)):
+
     return  db_client.local.users.find_one({"_id": ObjectId(id)})
 
+#CONSULTA DEL USUARIO ACTUAL
+@router.get("/me", response_model=UserDB, status_code=status.HTTP_200_OK)
+async def me(user: User):#= Depends(user_actual)
+    
+    return user
+    
 #"CONSULTA DE USUARIOS"
 @router.get("/users", response_model=list[UserDB], status_code=status.HTTP_200_OK)
 async def users():
@@ -133,7 +149,7 @@ async def users():
 
 # #ELIMINACIÓN DE USUARIOS
 @router.delete("/delete/{id}", status_code=status.HTTP_200_OK)
-async def delete(id: str ):#= Depends(user_actual)
+async def delete(id: str = Depends(user_actual)):
         
         found = db_client.local.users.find_one_and_delete({"_id": ObjectId(id)})
         

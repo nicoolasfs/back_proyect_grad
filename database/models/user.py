@@ -7,6 +7,7 @@ class User(BaseModel):
     cc: str
     role: str 
     disabled: bool | None
+    token: str | None
     
 class UserDB(User):
     password: str
