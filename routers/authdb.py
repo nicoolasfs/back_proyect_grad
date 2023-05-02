@@ -91,7 +91,7 @@ async def update(user: UserDB, user_actual: User = Depends(user_actual)):
     users_db.update({user.username: user.dict()})
     return {"message": "Usuario actualizado"}
 
-"INICIO DE SESIÓN"
+#INICIO DE SESIÓN
 @router.post("/login")
 
 async def login(form: OAuth2PasswordRequestForm = Depends()):
