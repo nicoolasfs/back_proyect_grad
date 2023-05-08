@@ -19,10 +19,6 @@ oauth2 = OAuth2PasswordBearer(tokenUrl="login")
 
 crypt = CryptContext(schemes=["bcrypt"])
 
-#DB MOMENTANEA
-
-users_db = {}
-
 def buscar_user(username: str):
     
     user = user_schema(db_client.local.users.find_one({"username": username}))

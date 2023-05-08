@@ -20,4 +20,5 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(authdb.router)
+#app.include_router(fish.router)
 
